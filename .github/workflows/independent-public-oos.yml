@@ -1,0 +1,36 @@
+name: Independent public-source OOS
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  oos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download independent NIFTY 1-minute source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p data/oos_source
+          base=https://raw.githubusercontent.com/technovusin/nifty50-historical-data/main/1min/2026
+          curl -L --fail --retry 3 $base/NIFTY50_1min_20260101_to_20260908.csv -o data/oos_source/2026_01_to_09_08.csv
+          for d in 09 10 11 15 16 17 18 21 22 23 24; do
+            curl -L --fail --retry 3 $base/NIFTY50_1min_202609${d}.csv -o data/oos_source/202609${d}.csv
+          done
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy
+      - name: Validate schema and run frozen OOS
+        run: python tools/independent_oos.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-public-oos
+          path: output/
+          retention-days: 14
