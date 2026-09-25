@@ -1,0 +1,10 @@
+starting_capital_inr: 15000
+context_timeframe: 15min
+execution_timeframe: 5min
+target_rr_research: 2.5
+preferred_rr_research: 3.0
+max_session_new_entries: 3
+last_entry_time: "15:10"
+square_off_time: "15:25"
+risk_per_trade_fraction: 0.01
+development_years_max: 4
