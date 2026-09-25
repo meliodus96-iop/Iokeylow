@@ -4,73 +4,74 @@ import numpy as np
 import pandas as pd
 
 fut=pd.read_csv("data/tick/NIFTY_FUT.csv")
-opt=pd.read_csv("data/tick/NIFTY_OPT.csv")
+fut["datetime"]=pd.to_datetime(fut["datetime"],errors="coerce")
+fut=fut.dropna(subset=["datetime"]).sort_values("datetime").reset_index(drop=True)
 
-out={
-  "futures_rows":int(len(fut)),
-  "options_rows":int(len(opt)),
-  "futures_columns":list(fut.columns),
-  "options_columns":list(opt.columns),
-}
-
-# TickBytes uses bid_px/ask_px for level 1 and _2..._5 for levels 2...5.
 bid_px=["bid_px"]+[f"bid_px_{i}" for i in range(2,6)]
 ask_px=["ask_px"]+[f"ask_px_{i}" for i in range(2,6)]
 bid_qty=["bid_qty"]+[f"bid_qty_{i}" for i in range(2,6)]
 ask_qty=["ask_qty"]+[f"ask_qty_{i}" for i in range(2,6)]
 
-missing=[c for c in bid_px+ask_px+bid_qty+ask_qty if c not in fut.columns]
+required=bid_px+ask_px+bid_qty+ask_qty+["ltp","ltq","tbq","tsq","volume","oi"]
+missing=[c for c in required if c not in fut.columns]
 if missing:
-    raise ValueError(f"Missing expected TickBytes L2 fields: {missing}")
+    raise ValueError(f"Missing required TickBytes columns: {missing}")
 
-for c in bid_qty+ask_qty:
+for c in required:
     fut[c]=pd.to_numeric(fut[c],errors="coerce")
 
-for c in ["ltp","ltq","tbq","tsq","bid_px","ask_px"]:
-    if c in fut.columns:
-        fut[c]=pd.to_numeric(fut[c],errors="coerce")
+# 5-level displayed-book imbalance.
+fut["bid_depth_5"]=fut[bid_qty].fillna(0).sum(axis=1)
+fut["ask_depth_5"]=fut[ask_qty].fillna(0).sum(axis=1)
+den=fut.bid_depth_5+fut.ask_depth_5
+fut["book_imbalance_5"]=np.where(den>0,(fut.bid_depth_5-fut.ask_depth_5)/den,np.nan)
 
-fut["depth_bid_5"]=fut[bid_qty].fillna(0).sum(axis=1)
-fut["depth_ask_5"]=fut[ask_qty].fillna(0).sum(axis=1)
-den=fut.depth_bid_5+fut.depth_ask_5
-fut["book_imbalance_5"]=np.where(den>0,(fut.depth_bid_5-fut.depth_ask_5)/den,np.nan)
+# Quote-inferred aggressive direction.
+# This is deliberately labelled an inference, not an exchange aggressor flag.
+fut["signed_ltq"]=np.where(
+    fut.ltp>=fut.ask_px, fut.ltq,
+    np.where(fut.ltp<=fut.bid_px, -fut.ltq, 0.0)
+)
 
-spread=fut["ask_px"]-fut["bid_px"]
-out["level2_fields_present"]=True
-out["finite_book_imbalance_share"]=float(np.isfinite(fut.book_imbalance_5).mean())
-out["positive_best_quote_spread_share"]=float((spread>0).mean())
-out["nonnegative_depth_share"]=float(((fut.depth_bid_5>=0)&(fut.depth_ask_5>=0)).mean())
+# Simple top-of-book OFI proxy based on changes in displayed best quotes/sizes.
+pb=fut.bid_px.to_numpy(); qb=fut.bid_qty.to_numpy()
+pa=fut.ask_px.to_numpy(); qa=fut.ask_qty.to_numpy()
+ofi=np.zeros(len(fut),dtype=float)
+for i in range(1,len(fut)):
+    ofi[i] = (
+        (qb[i] if pb[i]>=pb[i-1] else (-qb[i-1] if pb[i]<pb[i-1] else 0.0))
+        - (qa[i] if pa[i]<=pa[i-1] else (-qa[i-1] if pa[i]>pa[i-1] else 0.0))
+    )
+fut["ofi_top1"]=ofi
 
-ts=pd.to_datetime(fut["datetime"],errors="coerce")
-out["timestamp_parse_failures"]=int(ts.isna().sum())
-out["duplicate_timestamps"]=int(ts.duplicated().sum())
-out["first_timestamp"]=str(ts.min())
-out["last_timestamp"]=str(ts.max())
+spread=fut.ask_px-fut.bid_px
 
-# Candidate aggressor-side classifier:
-# If LTP >= best ask -> buy aggression; LTP <= best bid -> sell aggression.
-# Otherwise leave unclassified. This is a quote-based inference, NOT a reported aggressor flag.
-if {"ltp","bid_px","ask_px","ltq"}.issubset(fut.columns):
-    ltp=pd.to_numeric(fut.ltp,errors="coerce")
-    bid=pd.to_numeric(fut.bid_px,errors="coerce")
-    ask=pd.to_numeric(fut.ask_px,errors="coerce")
-    qty=pd.to_numeric(fut.ltq,errors="coerce").fillna(0)
-    buy=(ltp>=ask)&(qty>0)
-    sell=(ltp<=bid)&(qty>0)
-    out["quote_inferred_buy_share"]=float(buy.mean())
-    out["quote_inferred_sell_share"]=float(sell.mean())
-    out["quote_inferred_classified_share"]=float((buy|sell).mean())
-else:
-    out["quote_inferred_classified_share"]=0.0
+out={
+    "rows":int(len(fut)),
+    "first_timestamp":str(fut.datetime.min()),
+    "last_timestamp":str(fut.datetime.max()),
+    "unique_days":int(fut.datetime.dt.date.nunique()),
+    "l2_levels":5,
+    "finite_book_imbalance_share":float(np.isfinite(fut.book_imbalance_5).mean()),
+    "positive_best_quote_spread_share":float((spread>0).mean()),
+    "nonnegative_depth_share":float(((fut.bid_depth_5>=0)&(fut.ask_depth_5>=0)).mean()),
+    "quote_inferred_buy_share":float((fut.signed_ltq>0).mean()),
+    "quote_inferred_sell_share":float((fut.signed_ltq<0).mean()),
+    "quote_inferred_unclassified_share":float((fut.signed_ltq==0).mean()),
+    "tbq_present":True,
+    "tsq_present":True,
+    "tbq_tsq_mean_gap":float((fut.tbq-fut.tsq).mean()),
+    "ofi_finite_share":float(np.isfinite(fut.ofi_top1).mean()),
+}
 
-for c in ["delta","gamma","theta","vega","iv","bid_px","ask_px","bid_qty","ask_qty"]:
-    out[f"option_{c}_present"]=c in opt.columns
-
-# Crucial semantic note from TickBytes documentation:
-# tbq/tsq are aggregate order-book buy/sell quantities, not aggressor trade volume.
-out["tbq_tsq_semantics"]="aggregate order-book buy/sell depth; not aggressor-side traded volume"
-out["aggressor_side_status"]="quote-inferred candidate only; no explicit aggressor-side flag observed"
+# Basic sample-quality flags.
+out["quality_flag_short_sample"]=bool(out["unique_days"]<5)
+out["quality_flag_preopen_present"]=bool((fut.datetime.dt.time<pd.Timestamp("09:15").time()).any())
+out["warning"]="Sample is sufficient for feature/schema validation, not historical strategy performance."
 
 Path("output").mkdir(exist_ok=True)
-Path("output/tickbytes_microstructure_capability.json").write_text(json.dumps(out,indent=2,default=str))
+Path("output/microstructure_feature_capability.json").write_text(json.dumps(out,indent=2,default=str))
+fut[["datetime","ltp","ltq","bid_px","bid_qty","ask_px","ask_qty","bid_depth_5","ask_depth_5","book_imbalance_5","signed_ltq","ofi_top1","tbq","tsq"]].head(200).to_csv(
+    "output/microstructure_feature_sample.csv",index=False
+)
 print(json.dumps(out,indent=2,default=str))
