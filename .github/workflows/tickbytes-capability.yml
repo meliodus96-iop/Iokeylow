@@ -1,7 +1,5 @@
 name: TickBytes microstructure capability test
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 permissions:
   contents: read
