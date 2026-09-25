@@ -1,0 +1,160 @@
+name: Phase 1 public-data research
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phase1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy scipy matplotlib openpyxl pyarrow
+          pip install openchart
+
+      - name: Fetch free public NIFTY datasets
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p data/public data/bhav data/tickbytes output
+
+          echo "=== Download NIFTY 5-year public release ==="
+          gh release download indices-v1.0.0 \
+            -R voletiramu/nse-fno-1min-data \
+            -p nifty_indices_5yr.zip \
+            -D data/public
+
+          unzip -o data/public/nifty_indices_5yr.zip -d data/public/indices
+
+          echo "=== Clone free NIFTY options/strategy sample repository ==="
+          git clone --depth 1 https://github.com/rajmaurya0904/bhav.git /tmp/bhav
+
+          cp /tmp/bhav/sample_data/nifty_1y_1min.xlsx data/bhav/
+
+          echo "=== Fetch public TickBytes sample schemas ==="
+          git clone --depth 1 https://github.com/QuantDev-stack/TickBytes.git /tmp/tickbytes
+          cp -r /tmp/tickbytes/samples data/tickbytes_samples
+
+      - name: Probe public NSE access
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timedelta
+          import pandas as pd
+          from openchart import NSEData
+
+          out = []
+          nse = NSEData()
+          end = datetime.now()
+          start = end - timedelta(days=7)
+
+          for symbol, segment in [
+              ("NIFTY 50", "IDX"),
+              ("NIFTY26OCTFUT", "FO"),
+          ]:
+              try:
+                  df = nse.historical(symbol, segment, start, end, "1m")
+                  out.append({
+                      "symbol": symbol,
+                      "segment": segment,
+                      "rows": int(len(df)),
+                      "first": str(df.index.min()) if len(df) else "",
+                      "last": str(df.index.max()) if len(df) else "",
+                  })
+              except Exception as e:
+                  out.append({
+                      "symbol": symbol,
+                      "segment": segment,
+                      "rows": -1,
+                      "error": repr(e),
+                  })
+
+          pd.DataFrame(out).to_csv("output/public_nse_probe.csv", index=False)
+          print(pd.DataFrame(out).to_string(index=False))
+          PY
+
+      - name: Inspect datasets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          import zipfile
+
+          print("\n=== NIFTY release ZIP contents ===")
+          z = zipfile.ZipFile("data/public/nifty_indices_5yr.zip")
+          for n in z.namelist():
+              print(n)
+
+          xlsx = Path("data/bhav/nifty_1y_1min.xlsx")
+          xl = pd.ExcelFile(xlsx)
+          print("\n=== Bhav sample sheets ===")
+          print(xl.sheet_names)
+
+          for s in xl.sheet_names:
+              try:
+                  df = pd.read_excel(xlsx, sheet_name=s, nrows=5)
+                  print(f"\n--- {s} ---")
+                  print(df.columns.tolist())
+                  print(df.head().to_string())
+              except Exception as e:
+                  print("ERROR", s, repr(e))
+          PY
+
+      - name: Run repository Phase-1 software tests
+        run: |
+          if [ -d tests ]; then
+            python -m pytest -q
+          else
+            echo "No repository tests found."
+          fi
+
+      - name: Create research inventory
+        run: |
+          python - <<'PY'
+          import os, json, pandas as pd
+          from pathlib import Path
+
+          rows=[]
+          for p in Path("data").rglob("*"):
+              if p.is_file():
+                  rows.append({"path":str(p),"bytes":p.stat().st_size})
+          pd.DataFrame(rows).sort_values("bytes", ascending=False).to_csv(
+              "output/data_inventory.csv", index=False
+          )
+
+          report = {
+              "phase": "Phase 1",
+              "status": "data acquisition and software smoke research completed",
+              "note": "Public datasets are used only when legally/publicly accessible. No paid data is accessed.",
+              "true_historical_L2": False,
+              "true_historical_tick_orderflow": False,
+              "next_research_requirement": "Determine whether the available public data is sufficient for the causal order-flow strategy; do not label price/volume proxies as true order flow."
+          }
+          Path("output/PHASE1_DATA_STATUS.json").write_text(json.dumps(report, indent=2))
+          PY
+
+      - name: Package research artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-public-data-and-probe
+          path: |
+            output/
+            data/public/nifty_indices_5yr.zip
+            data/bhav/nifty_1y_1min.xlsx
+            data/tickbytes_samples/
+          retention-days: 7
