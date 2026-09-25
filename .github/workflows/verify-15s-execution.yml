@@ -1,0 +1,35 @@
+name: 15-second execution-path verification
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download free public 15-second NIFTY source
+        run: |
+          set -euxo pipefail
+          mkdir -p data/15s
+          base=https://raw.githubusercontent.com/technovusin/nifty50-historical-data/main/15sec/2026
+          curl -L --fail --retry 3 $base/NIFTY50_15sec_20260904_to_20260908.csv -o data/15s/1.csv
+          for d in 09 10 11 15 16 17 18 21 22 23 24; do
+            curl -L --fail --retry 3 $base/NIFTY50_15sec_202609${d}.csv -o data/15s/202609${d}.csv
+          done
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy
+      - name: Verify frozen rules
+        run: python tools/verify_15s_execution.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 15s-execution-verification
+          path: output/
+          retention-days: 14
