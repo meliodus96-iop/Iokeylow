@@ -1,0 +1,72 @@
+name: Phase 1 public-data backtest
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone real free sample
+        run: git clone --depth 1 https://github.com/rajmaurya0904/bhav.git /tmp/bhav
+
+      - name: Install Bhav and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e /tmp/bhav
+          pip install pandas pyarrow openpyxl
+
+      - name: Run our Phase-1 strategy on real sample
+        run: |
+          mkdir -p output
+          bhav run strategies/nifty_phase1_public.py             --start 2025-07-01             --end 2026-06-30             --data-source excel             --excel-path /tmp/bhav/sample_data/nifty_1y_1min.xlsx             --capital 15000             --lot-size 65             > output/bhav_run.log 2>&1
+
+          cat output/bhav_run.log
+
+          RUN_DIR=$(find runs -mindepth 1 -maxdepth 1 -type d | sort | tail -1)
+          cp "$RUN_DIR/metrics.json" output/metrics.json
+          cp "$RUN_DIR/trades.parquet" output/trades.parquet
+          cp "$RUN_DIR/equity_curve.parquet" output/equity_curve.parquet
+          cp "$RUN_DIR/manifest.json" output/manifest.json
+
+      - name: Create summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+
+          m=json.loads(Path("output/metrics.json").read_text())
+          t=pd.read_parquet("output/trades.parquet")
+
+          summary={
+              "phase":"Phase 1 public-data development",
+              "data":"Bhav bundled real NIFTY sample (Jul 2025-Jun 2026)",
+              "capital_inr":15000,
+              "order_flow_status":"proxy only; no historical L2/tick aggressor feed",
+              "metrics":m,
+              "trade_count":int(len(t)),
+          }
+
+          if len(t):
+              if "pnl" in t.columns:
+                  summary["total_pnl_inr"]=float(t["pnl"].sum())
+              if "return_pct" in t.columns:
+                  summary["trade_return_pct_mean"]=float(t["return_pct"].mean())
+
+          Path("output/PHASE1_PUBLIC_SUMMARY.json").write_text(json.dumps(summary,indent=2,default=str))
+          print(json.dumps(summary,indent=2,default=str))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase1-public-backtest
+          path: output/
+          retention-days: 14
