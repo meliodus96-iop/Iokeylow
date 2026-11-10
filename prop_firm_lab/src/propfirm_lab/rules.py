@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from pathlib import Path
@@ -54,8 +55,8 @@ class EquityEvent:
             raise ValueError(f"Timestamp must include a UTC offset: {raw_ts}")
         balance = float(row["balance"])
         equity = float(row["equity"])
-        if balance <= 0 or equity <= 0:
-            raise ValueError("balance and equity must be positive")
+        if not math.isfinite(balance) or not math.isfinite(equity):
+            raise ValueError("balance and equity must be finite numbers")
         kind = str(row.get("event_type", "mark")).strip().lower()
         if kind not in {"mark", "trade_close", "day_end"}:
             raise ValueError(f"Unsupported event_type: {kind}")
@@ -109,9 +110,17 @@ class PropFirmRuleEngine:
         }
         if self.overall.get("mode") not in valid_modes:
             raise ProfileError(f"overall_loss.mode must be one of {sorted(valid_modes)}")
+        overall_amount_type = self.overall.get("amount_type", "fixed")
+        if overall_amount_type not in {"fixed", "pct_of_initial"}:
+            raise ProfileError("overall_loss.amount_type must be fixed or pct_of_initial")
         _limit_amount(self.overall, self.initial)
-        if self.overall.get("metric", "equity") not in {"equity", "balance"}:
+        overall_metric = self.overall.get("metric", "equity")
+        if overall_metric not in {"equity", "balance"}:
             raise ProfileError("overall_loss.metric must be equity or balance")
+        if self.overall["mode"] in {"trailing_intraday_equity", "trailing_intraday_equity_lock_initial"} and overall_metric != "equity":
+            raise ProfileError("Intraday equity-trailing modes require overall_loss.metric='equity'")
+        if self.overall["mode"] == "trailing_eod_balance" and overall_metric != "balance":
+            raise ProfileError("trailing_eod_balance requires overall_loss.metric='balance'")
         if self.overall.get("evaluation", "intraday") not in {"intraday", "end_of_day"}:
             raise ProfileError("overall_loss.evaluation must be intraday or end_of_day")
         if self.daily is not None:

@@ -81,3 +81,10 @@ LuxAlgo's assumptions and flags must be retained in the report. Its documented l
 - Keep raw market datasets and real account exports in private storage.
 - Keep the original data immutable; store checksums in the run manifest.
 - Treat third-party rule directories as references; official firm terms are authoritative.
+
+
+## ChatGPT research control
+
+See [CHATGPT_OPERATIONS.md](./CHATGPT_OPERATIONS.md) for the turn-driven ChatGPT/GitHub run protocol, artifact review checklist and fail-closed conditions.
+
+A strategy adapter template is provided at `strategies/adapter_template.py`. It intentionally raises `NotImplementedError` until a real strategy is implemented; no trades or performance are fabricated.

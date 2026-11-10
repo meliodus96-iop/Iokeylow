@@ -96,3 +96,16 @@ def test_minimum_winning_days_are_enforced():
     result = calculate_payout(p, balance=112000, equity=112000, current_overall_floor=90000, winning_days=2)
     assert result["eligible"] is False
     assert result["reason"] == "minimum_winning_days_not_met"
+
+
+def test_zero_or_negative_equity_is_a_breach_event_not_a_parser_error():
+    engine = PropFirmRuleEngine(profile())
+    summary = engine.run([event("2026-01-01T10:00:00Z", 0, 0)])
+    assert summary["breach"]["reason"] == "overall_loss"
+
+
+def test_intraday_equity_trailing_rejects_balance_metric():
+    p = profile("trailing_intraday_equity")
+    p["overall_loss"]["metric"] = "balance"
+    with pytest.raises(ValueError, match="require overall_loss.metric='equity'"):
+        PropFirmRuleEngine(p)
