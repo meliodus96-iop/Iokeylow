@@ -1,6 +1,6 @@
-# Isolated market-data environment (Python 3.12 recommended).
-# NautilusTrader includes its own Databento Rust adapter; the standalone
-# Databento SDK is included for direct historical downloads, metadata and cost
-# estimation utilities. It is not required by NautilusTrader's adapter.
+# Free market-data research environment (Python 3.12 recommended).
+# NautilusTrader is the event-driven research/backtesting engine.
+# CCXT accesses exchange public market-data endpoints without API credentials.
+# Gold/FX historical data is fetched separately with pinned dukascopy-node via npx.
 nautilus_trader==1.231.0
-databento==0.90.0
+ccxt==4.5.92
