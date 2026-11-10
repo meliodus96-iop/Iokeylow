@@ -100,14 +100,16 @@ jobs:
         run: npm install --global @luxalgo/prop-firm-sim-cli@1.2.0
 
       - name: Verify engine versions
+        shell: bash
         run: |
           python - <<'PY'
           import nautilus_trader
-          from importlib.metadata import version
           print("NautilusTrader:", nautilus_trader.__version__)
-          print("Prop Firm Sim CLI:", version("@luxalgo/prop-firm-sim-cli"))
           assert nautilus_trader.__version__.startswith("2."), "NautilusTrader 2.x is required"
           PY
+          npm list --global @luxalgo/prop-firm-sim-cli --depth=0
+          prop-firm-sim --help > /dev/null
+          echo "LuxAlgo Prop Firm Sim CLI command is available."
 
       - name: Run custom prop-firm rule-engine tests
         run: python -m pytest prop_firm_lab/tests -q
