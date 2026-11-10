@@ -28,6 +28,22 @@ if ($LASTEXITCODE -ne 0) { throw "Market-data package installation failed." }
 if ($LASTEXITCODE -ne 0) { throw "Market-data import verification failed." }
 
 Write-Host ""
-Write-Host "Market-data environment is ready at: $VenvDir"
-Write-Host "Use .venv-marketdata\Scripts\python.exe for market-data scripts."
+Write-Host "Free crypto research runtime is ready at: $VenvDir"
 Write-Host "Existing NIFTY dependencies and environment were not changed."
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+$npx = Get-Command npx -ErrorAction SilentlyContinue
+if ($node -and $npx) {
+    $nodeVersion = (& node --version).Trim().TrimStart("v")
+    $nodeMajor = [int]($nodeVersion.Split(".")[0])
+    if ($nodeMajor -ge 20) {
+        Write-Host "Node.js $nodeVersion detected: Dukascopy Gold/FX downloader is ready."
+    }
+    else {
+        Write-Warning "Node.js 20+ is required for free Dukascopy Gold/FX history. Upgrade from https://nodejs.org/."
+    }
+}
+else {
+    Write-Warning "Python/crypto is ready. Install Node.js 20+ from https://nodejs.org/ to enable free Dukascopy Gold/FX downloads."
+}
+Write-Host "No paid data API key is required by the configured free fetchers."
