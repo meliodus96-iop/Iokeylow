@@ -1,0 +1,36 @@
+name: Validate market-data integration manifest
+
+on:
+  push:
+    branches:
+      - main
+      - feature/multi-asset-market-data-stack
+    paths:
+      - "market_data/**"
+      - "tools/validate_market_data_manifest.py"
+      - ".github/workflows/market-data-manifest.yml"
+  pull_request:
+    paths:
+      - "market_data/**"
+      - "tools/validate_market_data_manifest.py"
+      - ".github/workflows/market-data-manifest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate provider registry and safety defaults
+        run: python tools/validate_market_data_manifest.py
