@@ -88,3 +88,12 @@ LuxAlgo's assumptions and flags must be retained in the report. Its documented l
 See [CHATGPT_OPERATIONS.md](./CHATGPT_OPERATIONS.md) for the turn-driven ChatGPT/GitHub run protocol, artifact review checklist and fail-closed conditions.
 
 A strategy adapter template is provided at `strategies/adapter_template.py`. It intentionally raises `NotImplementedError` until a real strategy is implemented; no trades or performance are fabricated.
+
+
+## Massive market-data integration
+
+This branch includes the official Massive Python SDK and an optional historical aggregate-candle downloader. See [market_data/README.md](market_data/README.md) for setup, ticker conventions, and data limitations.
+
+A hosted Massive MCP connection is also configured for VS Code / GitHub Copilot in the repository's `.vscode/mcp.json`. For ChatGPT, connect the Massive app from the ChatGPT app directory and complete OAuth separately; a repository commit cannot add an app to a personal ChatGPT account.
+
+The historical-data GitHub Actions workflow is deliberately disabled for public repositories. Before real downloads, use a dedicated private repository and add the `MASSIVE_API_KEY` Actions secret. Datasets are uploaded as workflow artifacts and are not committed to Git.
