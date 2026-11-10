@@ -49,6 +49,19 @@
         "integrity": "SHA-256 checksum verified before conversion to Parquet",
         "terms": "CC BY-NC-SA 4.0; personal non-commercial non-production research/backtesting only under current Vision Dataset Terms",
         "limitation": "Historical depth/MBO is not included as a freely downloadable universal archive; use exchange-specific live public feeds or separately entitled data only when allowed."
+      },
+      "hyperliquid_live_collector": {
+        "name": "Hyperliquid public WebSocket",
+        "docs": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket",
+        "cost": "free_public_market_data_no_auth",
+        "fetcher": "tools/collect_hyperliquid_stream.py",
+        "channels": [
+          "trades",
+          "l2Book",
+          "candle"
+        ],
+        "archive": "data/raw/hyperliquid/<coin>/<UTC-date>_<channel>.jsonl",
+        "limitation": "Forward capture only; L2 is price-level snapshots, not L3; disconnects create possible gaps."
       }
     },
     "gold": {
@@ -66,14 +79,27 @@
         "limitation": "Broker-specific OTC quote stream; not COMEX GC/MGC futures, MCX Gold, executed trade prints, or a consolidated global order book."
       },
       "comex_gc_mgc": {
-        "name": "No free institutional-grade exchange depth feed configured",
+        "name": "Not included in the free-only source configuration",
         "cost": "no_paid_provider_configured",
         "limitation": "Do not substitute XAUUSD CFD quotes for COMEX futures trade/order-book evidence."
       },
       "mcx_gold": {
-        "name": "No free licensed exchange-depth feed configured",
+        "name": "Not included in the free-only source configuration",
         "cost": "no_paid_provider_configured",
         "limitation": "Requires an authorised source and custom adapter for genuine MCX exchange data."
+      },
+      "other_supported_metals": {
+        "name": "Dukascopy Node instrument catalogue",
+        "repository": "https://github.com/Leo4815162342/dukascopy-node",
+        "fetcher": "tools/fetch_dukascopy.ps1",
+        "examples": [
+          "xagaud",
+          "xaucad",
+          "xpdcmdusd",
+          "xptcmdusd",
+          "coppercmdusd"
+        ],
+        "limitation": "Only use instruments explicitly listed by the current upstream catalogue; quote data is not exchange trades or order-book depth."
       }
     },
     "fx": {
@@ -118,9 +144,17 @@
       "version": "4.5.92",
       "role": "open_source_public_crypto_market_data_client"
     },
-    "dukascopy_node": {
-      "version": "1.51.1",
-      "role": "open_source_cli_for_free_historical_gold_and_fx_bid_ask_quotes"
+    "websockets": {
+      "version": "15.0.1",
+      "role": "public_Hyperliquid_WebSocket_capture"
+    },
+    "pandas": {
+      "version": ">=2.2,<4",
+      "role": "normalization_and_data_processing"
+    },
+    "pyarrow": {
+      "version": ">=17,<30",
+      "role": "Parquet_storage"
     }
   },
   "security": {
@@ -128,5 +162,35 @@
     "commit_private_keys": false,
     "default_execution_enabled": false,
     "chatgpt_feed_mode": "read_only_published_reports"
+  },
+  "reviewed_open_source_tools": {
+    "hyperdata_terminal": {
+      "repository": "https://github.com/Co-Messi/HyperData-Terminal",
+      "license": "Apache-2.0",
+      "cost": "free_open_source; public exchange feeds",
+      "use": "live crypto orderflow, CVD, liquidation and whale context; local REST/WebSocket/MCP",
+      "limitation": "live monitor, not multi-year raw historical archive; crypto-only"
+    },
+    "tape_and_book": {
+      "repository": "https://github.com/Tworasos/tape-and-book",
+      "license": "MIT",
+      "cost": "free_open_source; Binance public live depth and trades",
+      "use": "local Binance DOM, heatmap, tape, footprint and measurement journal",
+      "limitation": "Binance-focused; no free CME/NQ depth; historical klines are not historical L2"
+    },
+    "edgedepth_terminal": {
+      "repository": "https://github.com/edgedepthhq/edgedepth-terminal",
+      "license": "AGPL-3.0 terminal; MIT gateway",
+      "cost": "free_self_hosted_public_Binance_feed",
+      "use": "local depth heatmap, DOM, tape, footprint and replay",
+      "limitation": "history starts at capture time and is bounded; hosted extended features have separate pricing"
+    },
+    "marketbridge": {
+      "repository": "https://github.com/tianrking/MarketBridge",
+      "license_status": "README displays MIT badge but root LICENSE file was not found in this review",
+      "cost": "self_hosted public CEX feeds; external optional sources may have separate terms/keys",
+      "use": "multi-exchange crypto L2/trades/funding/OI/candles/orderflow API",
+      "limitation": "fast-moving v0.0.6; default research config disables collectors; no Dukascopy Gold/Forex connector found; do not vendor before license clarification"
+    }
   }
 }
