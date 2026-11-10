@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "mode": "research_only",
+  "free_only": true,
   "engine": {
     "name": "NautilusTrader",
     "repository": "https://github.com/nautechsystems/nautilus_trader",
@@ -18,184 +19,114 @@
   },
   "providers": {
     "crypto": {
-      "connectors": [
-        "Binance",
-        "Hyperliquid",
-        "Deribit",
-        "Bybit",
-        "Coinbase"
-      ],
-      "markets": [
-        "spot",
-        "perpetuals",
-        "futures",
-        "options_where_supported"
-      ],
-      "data": [
-        "trades",
-        "quotes",
-        "order_book_where_supported",
-        "instrument_metadata"
-      ],
-      "quality_rule": "Keep venue-level books and CVD separate; declare missing history and venue-specific depth."
+      "unified_client": {
+        "name": "CCXT",
+        "repository": "https://github.com/ccxt/ccxt",
+        "version": "4.5.92",
+        "cost": "free_open_source_library; public exchange endpoints; no API credentials for public data",
+        "data": [
+          "OHLCV",
+          "recent_public_trades",
+          "current_orderbook_snapshot",
+          "funding_and_open_interest_where_exchange_exposes_them"
+        ],
+        "fetcher": "tools/fetch_crypto_ccxt.py",
+        "quality_rule": "Keep source exchange and exact market symbol; book snapshots are not historical depth."
+      },
+      "historical_archive": {
+        "name": "Binance Vision",
+        "repository": "https://github.com/binance/binance-public-data",
+        "cost": "free",
+        "fetcher": "tools/fetch_binance_vision.py",
+        "data": [
+          "spot_klines",
+          "spot_aggTrades",
+          "usd_m_futures_klines",
+          "usd_m_futures_aggTrades",
+          "coin_m_futures_klines",
+          "coin_m_futures_aggTrades"
+        ],
+        "integrity": "SHA-256 checksum verified before conversion to Parquet",
+        "terms": "CC BY-NC-SA 4.0; personal non-commercial non-production research/backtesting only under current Vision Dataset Terms",
+        "limitation": "Historical depth/MBO is not included as a freely downloadable universal archive; use exchange-specific live public feeds or separately entitled data only when allowed."
+      }
     },
     "gold": {
-      "comex_gc_mgc": {
-        "provider": "Databento",
-        "dataset": "GLBX.MDP3",
-        "schemas": [
-          "MBO",
-          "MBP-10",
-          "TRADES"
+      "xauusd_spot_cfd": {
+        "name": "Dukascopy public quote history via dukascopy-node",
+        "repository": "https://github.com/Leo4815162342/dukascopy-node",
+        "version": "1.51.1",
+        "cost": "free_public_quote_history; MIT-licensed fetcher code",
+        "fetcher": "tools/fetch_dukascopy.ps1",
+        "data": [
+          "bid_ask_price_ticks",
+          "bid_ask_ohlc",
+          "one_second_to_monthly_bars"
         ],
-        "book_levels": {
-          "MBO": "L3_order_by_order",
-          "MBP-10": "L2_ten_levels"
-        },
-        "license": "paid_or_licensed",
-        "nautilus_adapter": true
+        "limitation": "Broker-specific OTC quote stream; not COMEX GC/MGC futures, MCX Gold, executed trade prints, or a consolidated global order book."
+      },
+      "comex_gc_mgc": {
+        "name": "No free institutional-grade exchange depth feed configured",
+        "cost": "no_paid_provider_configured",
+        "limitation": "Do not substitute XAUUSD CFD quotes for COMEX futures trade/order-book evidence."
       },
       "mcx_gold": {
-        "provider": "Official MCX feed or authorised distributor",
-        "schemas": [
-          "provider_native_order_book",
-          "provider_native_trades"
-        ],
-        "license": "exchange_or_vendor_entitlement",
-        "nautilus_adapter": "custom_required"
-      },
-      "xauusd_spot_cfd": {
-        "provider": "Broker_or_ECN",
-        "schemas": [
-          "broker_quotes",
-          "broker_trades",
-          "broker_depth_if_exposed"
-        ],
-        "license": "broker_entitlement",
-        "nautilus_adapter": "venue_specific_or_custom",
-        "limitation": "No consolidated global OTC XAUUSD order book."
+        "name": "No free licensed exchange-depth feed configured",
+        "cost": "no_paid_provider_configured",
+        "limitation": "Requires an authorised source and custom adapter for genuine MCX exchange data."
       }
     },
     "fx": {
-      "cme_fx_futures": {
-        "provider": "Databento",
-        "dataset": "GLBX.MDP3",
-        "schemas": [
-          "MBO",
-          "MBP-10",
-          "TRADES"
-        ],
-        "nautilus_adapter": true,
-        "limitation": "CME currency futures are not spot FX."
-      },
       "spot_fx": {
-        "provider": "Interactive Brokers or another licensed broker",
-        "schemas": [
-          "broker_quotes",
-          "broker_trades",
-          "broker_depth_if_entitled"
+        "name": "Dukascopy public quote history via dukascopy-node",
+        "repository": "https://github.com/Leo4815162342/dukascopy-node",
+        "version": "1.51.1",
+        "cost": "free_public_quote_history; MIT-licensed fetcher code",
+        "fetcher": "tools/fetch_dukascopy.ps1",
+        "data": [
+          "bid_ask_price_ticks",
+          "bid_ask_ohlc"
         ],
-        "nautilus_adapter": "broker_specific",
-        "limitation": "Broker-specific liquidity; no consolidated global FX book."
+        "limitation": "Broker-specific OTC quotes, not a consolidated global FX order book or complete interbank trade tape."
+      },
+      "cme_fx_futures": {
+        "name": "Not included in the free-only source configuration",
+        "cost": "no_paid_provider_configured",
+        "limitation": "CME currency futures are not spot FX."
       }
     },
-    "equities": {
-      "us_equities": {
-        "provider": "Databento venue_specific_dataset or Interactive Brokers",
-        "schemas": [
-          "dataset_supported_trades",
-          "dataset_supported_quotes",
-          "MBO_where_available"
-        ],
-        "nautilus_adapter": "Databento_or_broker",
-        "limitation": "Check each dataset. EQUS.MINI is aggregated top-of-book and is not MBO."
-      },
-      "nse_equities": {
-        "provider": "NSE licensed feed or authorised vendor",
-        "schemas": [
-          "L1",
-          "L2",
-          "L3",
-          "tick_by_tick_where_licensed"
-        ],
-        "nautilus_adapter": "custom_required"
-      }
-    },
-    "options": {
-      "cme_options_on_futures": {
-        "provider": "Databento",
-        "dataset": "GLBX.MDP3",
-        "schemas": [
-          "MBO",
-          "MBP-10",
-          "TRADES"
-        ],
-        "nautilus_adapter": true
-      },
-      "us_equity_options": {
-        "provider": "Licensed OPRA vendor such as Databento",
-        "schemas": [
-          "trades",
-          "quotes",
-          "NBBO"
-        ],
-        "nautilus_adapter": "provider_specific",
-        "limitation": "OPRA trades/quotes do not mean order-by-order MBO."
-      },
-      "crypto_options": {
-        "provider": "Deribit",
-        "schemas": [
-          "option_instruments",
-          "trades",
-          "quotes",
-          "order_book_where_supported"
-        ],
-        "nautilus_adapter": true,
-        "limitation": "Options flow requires individual trade events; chain/OI snapshots alone are not flow."
-      },
-      "nse_fno": {
-        "provider": "NSE licensed F&O feed or authorised vendor",
-        "schemas": [
-          "contract_trades",
-          "quotes",
-          "depth_where_licensed"
-        ],
-        "nautilus_adapter": "custom_required"
-      }
-    },
-    "mcx_other_commodities": {
-      "provider": "MCX licensed feed or authorised distributor",
-      "schemas": [
-        "order_book_where_entitled",
-        "trades"
-      ],
-      "nautilus_adapter": "custom_required"
+    "equities_and_options": {
+      "status": "not_in_initial_free_data_scope",
+      "limitation": "Do not imply that the selected free crypto/OTC quote sources provide licensed exchange depth for equities or options."
     }
   },
   "analytics": {
-    "footprint": "requires price-level executed trades, tick size and trustworthy aggressor-side labels",
-    "cvd_delta": "exchange-reported aggressor side preferred; quote-inferred side must remain labelled estimated",
-    "dom_heatmap": "requires an initial book snapshot and continuous, sequence-valid depth deltas",
-    "l3_queue": "requires order IDs and order-level events; cannot be reconstructed from L2",
+    "footprint": "requires actual executed trade events, correct tick size, and defensible aggressor-side provenance; OTC quote ticks are not executions",
+    "cvd_delta": "Binance aggTrades may derive aggressor side from exchange buyer-maker semantics; CCXT recent trades need venue-specific side validation; Dukascopy quote movement is not trade delta",
+    "dom_heatmap": "requires continuous sequence-valid book snapshots and deltas; a single CCXT order-book snapshot is not a historical heatmap",
+    "l3_queue": "requires order IDs and order-level add/modify/cancel/execute events; not supplied by the configured free fetchers",
     "absorption_iceberg": "probabilistic features only; public L2 cannot prove hidden order identity or intent",
-    "options_flow": "individual option trades with instrument, timestamp, price, size and aggressor semantics",
-    "gex": "derived analytics; dealer positioning/sign assumptions must be explicit and must not be presented as observed trades"
+    "options_flow": "requires individual option trades on the actual contract, with timestamp, price, size and aggressor semantics",
+    "gex": "model-derived estimate; disclose gamma calculation, multiplier, input and dealer-position assumptions"
+  },
+  "client_packages": {
+    "nautilus_trader": {
+      "version": "1.231.0",
+      "role": "open_source_multi_asset_event_driven_research_and_backtesting_engine"
+    },
+    "ccxt": {
+      "version": "4.5.92",
+      "role": "open_source_public_crypto_market_data_client"
+    },
+    "dukascopy_node": {
+      "version": "1.51.1",
+      "role": "open_source_cli_for_free_historical_gold_and_fx_bid_ask_quotes"
+    }
   },
   "security": {
     "commit_credentials": false,
     "commit_private_keys": false,
     "default_execution_enabled": false,
     "chatgpt_feed_mode": "read_only_published_reports"
-  },
-  "client_packages": {
-    "nautilus_trader": {
-      "version": "1.231.0",
-      "role": "stable_1_x_multi_asset_engine_and_native_databento_adapter"
-    },
-    "databento": {
-      "version": "0.90.0",
-      "role": "standalone_historical_download_metadata_and_cost_estimation_utilities",
-      "required_for_nautilus_native_databento_adapter": false
-    }
   }
 }
