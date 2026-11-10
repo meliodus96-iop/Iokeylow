@@ -10,6 +10,7 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/install_market_data.ps1"
       - ".github/workflows/market-data-manifest.yml"
   pull_request:
     paths:
