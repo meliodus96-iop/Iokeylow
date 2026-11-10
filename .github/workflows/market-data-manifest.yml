@@ -40,6 +40,22 @@ jobs:
       - name: Validate provider registry and safety defaults
         run: python tools/validate_market_data_manifest.py
 
+  install-runtime-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Windows installer and import verification
+        shell: pwsh
+        run: .\tools\install_market_data.ps1
+
   install-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 20
