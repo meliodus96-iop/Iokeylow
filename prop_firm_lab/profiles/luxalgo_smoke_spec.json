@@ -1,0 +1,19 @@
+{
+  "challengeId": "synthetic-smoke-only",
+  "name": "Synthetic software smoke test only",
+  "accountSize": 100000,
+  "steps": [
+    {"profitTargetPct": 8, "minTradingDays": 3}
+  ],
+  "dailyLoss": {"pct": 5},
+  "maxLoss": {"pct": 10, "mode": "static-initial"},
+  "fees": {"price": 0, "refundableOnPass": false},
+  "funded": {
+    "profitSplitPct": 80,
+    "payoutFrequency": "biweekly"
+  },
+  "flagsNotSimulated": [
+    "Synthetic fixture is not an actual firm ruleset",
+    "No real trade data is used in the smoke workflow"
+  ]
+}
