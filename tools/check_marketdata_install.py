@@ -10,6 +10,7 @@ import sys
 EXPECTED = {
     "nautilus_trader": "1.231.0",
     "ccxt": "4.5.92",
+    "websockets": "15.0.1",
 }
 
 
@@ -21,6 +22,9 @@ def main() -> int:
     try:
         import ccxt  # noqa: F401
         import nautilus_trader  # noqa: F401
+        import pandas  # noqa: F401
+        import pyarrow  # noqa: F401
+        import websockets  # noqa: F401
     except Exception as exc:
         print(f"ERROR: market-data runtime import failed: {exc!r}", file=sys.stderr)
         return 1
@@ -41,8 +45,8 @@ def main() -> int:
     print("OK: free market-data Python runtime installed and importable")
     for package, version in EXPECTED.items():
         print(f"  {package}=={version}")
-    print("OK: CCXT public market-data client is available; no API key was used")
-    print("NOTE: this is an import smoke test; it does not prove a live feed or history download")
+    print("OK: CCXT public client, Parquet writer and WebSocket client are available")
+    print("NOTE: this is an import smoke test; it does not prove a live feed or data history")
     return 0
 
 
