@@ -95,6 +95,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ./prop_firm_lab
           python -m pip install --pre "nautilus_trader==2.0.0rc8"
+          python -c "from massive import RESTClient; print(\u0027Massive Python SDK imported successfully\u0027)"
 
       - name: Install LuxAlgo Prop Firm Sim CLI
         run: npm install --global @luxalgo/prop-firm-sim-cli@1.2.0
