@@ -155,7 +155,12 @@ async def collect(args: argparse.Namespace) -> int:
                             })
                             continue
 
-                        coin = str((data or {}).get("coin", coins[0])).upper()
+                        data_coin = None
+                        if isinstance(data, dict):
+                            data_coin = data.get("coin") or data.get("s")
+                        elif isinstance(data, list) and data and isinstance(data[0], dict):
+                            data_coin = data[0].get("coin") or data[0].get("s")
+                        coin = str(data_coin or coins[0]).upper()
                         if coin not in coins:
                             coin = coins[0]
                         archive.write(coin, channel, {
