@@ -26,7 +26,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\install_market_data.ps1
 BTC/USDT USD-M 1-minute candles (example, one day):
 
 ~~~powershell
-.\.venv-marketdata\Scripts\python.exe tools\fetch_crypto_ccxt.py --exchange binanceusdm --symbol BTC/USDT --kind ohlcv --timeframe 1m --since 2026-11-01 --until 2026-11-02
+.\.venv-marketdata\Scripts\python.exe tools\fetch_crypto_ccxt.py --exchange binanceusdm --symbol "BTC/USDT:USDT" --kind ohlcv --timeframe 1m --since 2026-11-01 --until 2026-11-02
 ~~~
 
 XAUUSD tick quotes (one day):
