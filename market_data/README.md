@@ -21,19 +21,33 @@ The initial research environment is pinned to the stable 1.x line:
 - Do not mix 1.x code examples with the 2.x API; the APIs differ.
 - NautilusTrader 2.0.0 release candidates are for testing, not the default live-capital runtime. Re-evaluate after an official stable 2.0 release.
 
-Optional local install:
+Pinned local install (separate from the existing NIFTY environment):
+
+```powershell
+# Windows PowerShell, from the repository root
+.\tools\install_market_data.ps1
+```
+
+The script creates `.venv-marketdata`, installs the exact versions in
+`requirements-marketdata.txt`, and runs an import smoke test. It does not
+change the existing `requirements.txt` or NIFTY strategy environment.
+
+For Linux/macOS:
 
 ```bash
 python3.12 -m venv .venv-marketdata
-# Linux/macOS
 source .venv-marketdata/bin/activate
-# Windows PowerShell:
-# .venv-marketdata\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install nautilus_trader==1.231.0
+python -m pip install -r requirements-marketdata.txt
+python tools/check_marketdata_install.py
 ```
 
-This environment is deliberately separate from the existing project dependencies.
+Pinned packages:
+
+- `nautilus_trader==1.231.0` — latest stable 1.x runtime; the 2.0 line is still release-candidate software.
+- `databento==0.90.0` — official Python SDK for standalone file downloads, metadata lookups and cost estimates.
+
+**Important:** NautilusTrader already bundles its Databento adapter using Databento's Rust client. The separate `databento` Python SDK is not required for that adapter; it is installed as a companion utility for direct historical-data and metadata workflows. Neither package grants data entitlement or supplies a Databento API key.
 
 ### 2. Institutional non-crypto feed: Databento
 
@@ -48,6 +62,19 @@ Use Databento where exchange-native book depth and historical trade data are req
 - OPRA options data is trades/quotes/NBBO coverage, not an order-by-order options book.
 
 Databento is a paid/licensed data provider, not a GitHub dependency. Validate instrument, venue, schema, history and redistribution rights before purchasing or collecting.
+
+#### Ordinary candles and in-depth data
+
+The same provider can supply both. For the CME Globex dataset, Databento's native OHLCV schemas are:
+
+- `ohlcv-1s`: 1-second candles
+- `ohlcv-1m`: 1-minute candles
+- `ohlcv-1h`: 1-hour candles
+- `ohlcv-1d`: daily candles
+
+Five-minute and 15-minute bars can be resampled from 1-minute bars, or aggregated from raw trades through NautilusTrader. No candle is emitted for an interval with no trade, so missing intervals must remain explicitly missing rather than be filled with invented prices.
+
+Choose OHLCV for ordinary charting and longer-horizon research. Choose TRADES/TBBO/MBP-10/MBO when the hypothesis needs trade-by-trade activity or order-book detail. The correct schema and history depth depend on the specific dataset and data plan; not every asset class or dataset exposes MBO.
 
 ### 3. Native crypto feeds through NautilusTrader
 
