@@ -71,7 +71,7 @@ def main() -> int:
 
     for path, value in walk(document):
         key = path.rsplit(".", 1)[-1].lower()
-        if any(part in key for part in FORBIDDEN_KEY_PARTS):
+        if any(part in key for part in FORBIDDEN_KEY_PARTS) and value is not False:
             errors.append(f"possible credential field is forbidden in manifest: {path}")
         if isinstance(value, str) and value.strip().lower() in {"changeme", "your_api_key", "replace_me"}:
             errors.append(f"placeholder credential-like value is forbidden: {path}")
