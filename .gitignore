@@ -7,4 +7,5 @@ data/private/
 output/*.csv
 output/*.parquet
 output/*.json
-\n.venv-marketdata/\n
+
+.venv-marketdata/
