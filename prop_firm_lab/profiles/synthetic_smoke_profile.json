@@ -1,0 +1,34 @@
+{
+  "profile_id": "synthetic-software-test-only",
+  "verification": {
+    "status": "synthetic_fixture",
+    "last_verified_utc": null,
+    "official_source_urls": [],
+    "verified_by": "automated-tests",
+    "notes": "Synthetic fixture only. Not a real prop firm and never valid for research mode."
+  },
+  "account": {"initial_balance": 100000, "currency": "USD"},
+  "session": {"timezone": "UTC", "reset_time": "00:00"},
+  "overall_loss": {
+    "amount": 10000,
+    "amount_type": "fixed",
+    "mode": "static_initial",
+    "metric": "equity",
+    "evaluation": "intraday"
+  },
+  "daily_loss": {
+    "amount": 5000,
+    "amount_type": "fixed",
+    "anchor": "prior_day_equity",
+    "includes_open_pnl": true,
+    "evaluation": "intraday"
+  },
+  "target": {"profit_target_pct": 8, "minimum_trading_days": 3, "consistency_max_best_day_pct": null},
+  "payout": {
+    "profit_split_pct": 80,
+    "minimum_winning_days": 0,
+    "profit_buffer": 0,
+    "maximum_gross_payout": null,
+    "withdrawal_cap_pct_of_profit": null
+  }
+}

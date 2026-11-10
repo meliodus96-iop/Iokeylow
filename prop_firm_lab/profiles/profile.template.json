@@ -1,0 +1,55 @@
+{
+  "profile_id": "replace-with-firm-program-and-version",
+  "verification": {
+    "status": "unverified",
+    "last_verified_utc": null,
+    "official_source_urls": [],
+    "verified_by": null,
+    "notes": "Do not use for a real run until all fields are checked against current official rules and the platform symbol specification."
+  },
+  "account": {
+    "initial_balance": null,
+    "currency": "USD"
+  },
+  "session": {
+    "timezone": null,
+    "reset_time": "00:00"
+  },
+  "overall_loss": {
+    "amount": null,
+    "amount_type": "fixed",
+    "mode": null,
+    "metric": "equity",
+    "evaluation": "intraday"
+  },
+  "daily_loss": {
+    "amount": null,
+    "amount_type": "fixed",
+    "anchor": "prior_day_equity",
+    "includes_open_pnl": true,
+    "evaluation": "intraday"
+  },
+  "target": {
+    "profit_target_pct": null,
+    "minimum_trading_days": 0,
+    "consistency_max_best_day_pct": null
+  },
+  "payout": {
+    "profit_split_pct": null,
+    "minimum_winning_days": 0,
+    "profit_buffer": 0,
+    "maximum_gross_payout": null,
+    "withdrawal_cap_pct_of_profit": null
+  },
+  "monte_carlo": {
+    "risk": "0.5%",
+    "paths": 10000,
+    "seed": 42
+  },
+  "luxalgo": {
+    "mode": "directory",
+    "firm": null,
+    "challenge": null,
+    "spec_path": null
+  }
+}

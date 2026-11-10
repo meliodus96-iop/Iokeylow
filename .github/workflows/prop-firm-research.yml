@@ -1,0 +1,158 @@
+name: Prop Firm Research
+
+on:
+  push:
+    branches:
+      - main
+      - prop-firm-research-platform
+    paths:
+      - "prop_firm_lab/**"
+      - ".github/workflows/prop-firm-research.yml"
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: "smoke = software checks only; research = private-data backtest + rule engine + Monte Carlo"
+        type: choice
+        options:
+          - smoke
+          - research
+        default: smoke
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prop-firm-research-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: prop_firm_lab/src
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve run request
+        id: request
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            MODE="${{ inputs.run_mode }}"
+          else
+            MODE="$(python -c 'import json; print(json.load(open("prop_firm_lab/requests/current_run.json"))["mode"])')"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Requested mode: $MODE"
+
+      - name: Protect real research data
+        if: steps.request.outputs.mode == 'research'
+        shell: bash
+        env:
+          REPOSITORY_IS_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [[ "$REPOSITORY_IS_PRIVATE" != "true" ]]; then
+            echo "::error::Research mode is disabled on public repositories. Create/use a private repository before uploading market data, strategy logs, or reports."
+            exit 2
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          req = json.loads(Path("prop_firm_lab/requests/current_run.json").read_text())
+          required = ["profile_path", "data_path", "strategy_entrypoint", "strategy_config_path"]
+          missing = [key for key in required if not req.get(key)]
+          if missing:
+              raise SystemExit("Research request missing: " + ", ".join(missing))
+          for key in ["profile_path", "data_path", "strategy_config_path"]:
+              if not Path(req[key]).exists():
+                  raise SystemExit(f"Requested {key} does not exist: {req[key]}")
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: prop_firm_lab/pyproject.toml
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Python research dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./prop_firm_lab
+          python -m pip install --pre "nautilus_trader==2.0.0rc8"
+
+      - name: Install LuxAlgo Prop Firm Sim CLI
+        run: npm install --global @luxalgo/prop-firm-sim-cli@1.2.0
+
+      - name: Verify engine versions
+        run: |
+          python - <<'PY'
+          import nautilus_trader
+          from importlib.metadata import version
+          print("NautilusTrader:", nautilus_trader.__version__)
+          print("Prop Firm Sim CLI:", version("@luxalgo/prop-firm-sim-cli"))
+          assert nautilus_trader.__version__.startswith("2."), "NautilusTrader 2.x is required"
+          PY
+
+      - name: Run custom prop-firm rule-engine tests
+        run: python -m pytest prop_firm_lab/tests -q
+
+      - name: Create run output folder
+        run: mkdir -p prop_firm_lab/outputs
+
+      - name: Run NautilusTrader software smoke backtest
+        if: steps.request.outputs.mode == 'smoke'
+        run: python prop_firm_lab/scripts/nautilus_smoke.py
+
+      - name: Run LuxAlgo Monte Carlo software smoke test
+        if: steps.request.outputs.mode == 'smoke'
+        shell: bash
+        run: |
+          prop-firm-sim simulate \
+            --spec prop_firm_lab/profiles/luxalgo_smoke_spec.json \
+            --winrate 0.48 --avg-win 1.5 --avg-loss 1 \
+            --trades-per-day 3 --risk "0.5%" \
+            --paths 1000 --seed 42 --no-funded --json \
+            > prop_firm_lab/outputs/luxalgo_smoke.json
+          echo "Synthetic Monte Carlo smoke run completed. This is not market evidence."
+
+      - name: Run end-to-end research pipeline
+        if: steps.request.outputs.mode == 'research'
+        env:
+          RUN_REQUEST: prop_firm_lab/requests/current_run.json
+        run: python prop_firm_lab/scripts/run_research.py
+
+      - name: Upload smoke evidence
+        if: always() && steps.request.outputs.mode == 'smoke'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prop-firm-smoke-${{ github.run_number }}
+          path: |
+            prop_firm_lab/outputs/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload private research outputs
+        if: always() && steps.request.outputs.mode == 'research' && github.event.repository.private == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: prop-firm-research-${{ github.run_number }}
+          path: |
+            prop_firm_lab/outputs/
+          if-no-files-found: error
+          retention-days: 14

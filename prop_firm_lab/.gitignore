@@ -1,0 +1,17 @@
+# Never commit private market/account data.
+data/input/**
+data/private/**
+*.parquet
+*.feather
+*.mt5
+*.html
+*.statement
+*.account.csv
+
+# Generated outputs and local environments.
+outputs/
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.DS_Store
