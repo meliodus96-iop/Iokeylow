@@ -77,7 +77,7 @@ Databento is a data vendor, not a prerequisite for any of the free public feed p
 
 4. Start with a small crypto candle test (end date is exclusive):
    
-   .\.venv-marketdata\Scripts\python.exe tools\fetch_crypto_ccxt.py --exchange binanceusdm --symbol BTC/USDT --kind ohlcv --timeframe 1m --since 2026-11-01 --until 2026-11-02
+   .\.venv-marketdata\Scripts\python.exe tools\fetch_crypto_ccxt.py --exchange binanceusdm --symbol "BTC/USDT:USDT" --kind ohlcv --timeframe 1m --since 2026-11-01 --until 2026-11-02
 
 5. Start a small Gold bid/ask tick test:
    

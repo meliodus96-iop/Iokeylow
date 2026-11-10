@@ -208,7 +208,7 @@ def run(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exchange", default="binanceusdm", help="CCXT exchange id; e.g. binanceusdm, binance, bybit, okx, hyperliquid")
-    parser.add_argument("--symbol", default="BTC/USDT", help="CCXT unified symbol; check the venue's markets")
+    parser.add_argument("--symbol", default="BTC/USDT:USDT", help="CCXT unified symbol; check the venue's markets")
     parser.add_argument("--kind", choices=("ohlcv", "orderbook", "trades"), default="ohlcv")
     parser.add_argument("--timeframe", default="1m", help="Exchange-supported candle timeframe")
     parser.add_argument("--since", help="UTC start, e.g. 2024-01-01 (OHLCV only)")
