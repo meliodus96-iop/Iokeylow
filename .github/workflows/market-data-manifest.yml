@@ -1,16 +1,20 @@
-name: Validate market-data integration and runtime
+name: Validate free market-data integration and runtime
 
 on:
   push:
     branches:
       - main
       - feature/multi-asset-market-data-stack
+      - feature/free-market-data-fetchers
     paths:
       - "market_data/**"
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
       - "tools/install_market_data.ps1"
+      - "tools/fetch_*.py"
+      - "tools/collect_*.py"
+      - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   pull_request:
     paths:
@@ -18,6 +22,10 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/install_market_data.ps1"
+      - "tools/fetch_*.py"
+      - "tools/collect_*.py"
+      - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   workflow_dispatch:
 
@@ -40,9 +48,12 @@ jobs:
       - name: Validate provider registry and safety defaults
         run: python tools/validate_market_data_manifest.py
 
+      - name: Compile Python fetchers
+        run: python -m compileall -q tools
+
   install-runtime-windows:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,6 +62,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Set up Node.js for Dukascopy CLI check
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install and verify Dukascopy CLI
+        shell: pwsh
+        run: npx --yes dukascopy-node@1.51.1 --help
 
       - name: Run Windows installer and import verification
         shell: pwsh
@@ -58,7 +78,7 @@ jobs:
 
   install-runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,7 +88,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pinned market-data packages
+      - name: Install free market-data packages
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-marketdata.txt
@@ -76,5 +96,5 @@ jobs:
       - name: Check dependency consistency
         run: python -m pip check
 
-      - name: Verify NautilusTrader, Databento SDK and native adapter imports
+      - name: Verify NautilusTrader, CCXT, Parquet and WebSocket imports
         run: python tools/check_marketdata_install.py
