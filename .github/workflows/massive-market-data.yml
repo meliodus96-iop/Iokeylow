@@ -1,0 +1,110 @@
+name: Massive Market Data Fetch
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: "Massive ticker (examples: X:BTCUSD, C:EURUSD, AAPL)"
+        required: true
+        type: string
+        default: "X:BTCUSD"
+      multiplier:
+        description: "Bar multiplier"
+        required: true
+        type: string
+        default: "5"
+      timespan:
+        description: "Bar interval"
+        required: true
+        type: choice
+        options:
+          - minute
+          - hour
+          - day
+          - week
+        default: minute
+      from_date:
+        description: "Start date, YYYY-MM-DD"
+        required: true
+        type: string
+        default: "2025-01-01"
+      to_date:
+        description: "End date, YYYY-MM-DD"
+        required: true
+        type: string
+        default: "2025-02-01"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: massive-market-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      MASSIVE_API_KEY: ${{ secrets.MASSIVE_API_KEY }}
+      PYTHONPATH: prop_firm_lab/src:prop_firm_lab
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Protect market data
+        shell: bash
+        env:
+          REPOSITORY_IS_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [[ "$REPOSITORY_IS_PRIVATE" != "true" ]]; then
+            echo "::error::Market-data downloads are disabled for public repositories. Use a dedicated private repository."
+            exit 2
+          fi
+          if [[ -z "$MASSIVE_API_KEY" ]]; then
+            echo "::error::Add MASSIVE_API_KEY under Settings > Secrets and variables > Actions."
+            exit 2
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: prop_firm_lab/pyproject.toml
+
+      - name: Install research package and Massive SDK
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./prop_firm_lab
+
+      - name: Fetch historical candles
+        shell: bash
+        env:
+          TICKER: ${{ inputs.ticker }}
+          MULTIPLIER: ${{ inputs.multiplier }}
+          TIMESPAN: ${{ inputs.timespan }}
+          FROM_DATE: ${{ inputs.from_date }}
+          TO_DATE: ${{ inputs.to_date }}
+        run: |
+          SAFE_TICKER="$(printf '%s' "$TICKER" | tr -c 'A-Za-z0-9_-' '_')"
+          mkdir -p prop_firm_lab/data/input
+          python -m propfirm_lab.market_data.fetch \
+            --ticker "$TICKER" \
+            --multiplier "$MULTIPLIER" \
+            --timespan "$TIMESPAN" \
+            --from-date "$FROM_DATE" \
+            --to-date "$TO_DATE" \
+            --output "prop_firm_lab/data/input/${SAFE_TICKER}_${MULTIPLIER}${TIMESPAN}.csv"
+
+      - name: Upload private market-data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: massive-bars-${{ github.run_number }}
+          path: prop_firm_lab/data/input/
+          if-no-files-found: error
+          retention-days: 7
