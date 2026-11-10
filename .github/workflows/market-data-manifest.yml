@@ -1,0 +1,63 @@
+name: Validate market-data integration and runtime
+
+on:
+  push:
+    branches:
+      - main
+      - feature/multi-asset-market-data-stack
+    paths:
+      - "market_data/**"
+      - "requirements-marketdata.txt"
+      - "tools/validate_market_data_manifest.py"
+      - "tools/check_marketdata_install.py"
+      - ".github/workflows/market-data-manifest.yml"
+  pull_request:
+    paths:
+      - "market_data/**"
+      - "requirements-marketdata.txt"
+      - "tools/validate_market_data_manifest.py"
+      - "tools/check_marketdata_install.py"
+      - ".github/workflows/market-data-manifest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate provider registry and safety defaults
+        run: python tools/validate_market_data_manifest.py
+
+  install-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned market-data packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-marketdata.txt
+
+      - name: Check dependency consistency
+        run: python -m pip check
+
+      - name: Verify NautilusTrader, Databento SDK and native adapter imports
+        run: python tools/check_marketdata_install.py

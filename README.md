@@ -48,3 +48,11 @@ Synthetic smoke-test results are software checks only and are not market evidenc
 6. Perform limited robustness checks.
 7. Freeze the simplest credible candidate.
 8. Only then begin Phase-2 institutional validation.
+
+## Multi-asset market-data integration
+
+The additive multi-asset market-data layer is documented in [market_data/README.md](market_data/README.md). It keeps the existing NIFTY strategy untouched while defining one normalized data/research engine for crypto, COMEX/MCX Gold, FX, equities and listed options.
+
+- [Provider registry](market_data/providers.json)
+- [Canonical event and data-quality contract](market_data/DATA_CONTRACT.md)
+- [Manifest validator](tools/validate_market_data_manifest.py)
