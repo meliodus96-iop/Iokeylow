@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "mode": "research_only",
+  "engine": {
+    "name": "NautilusTrader",
+    "repository": "https://github.com/nautechsystems/nautilus_trader",
+    "version": "1.231.0",
+    "version_line": "stable_1_x",
+    "python": "3.12",
+    "role": [
+      "normalized_market_data",
+      "historical_replay",
+      "event_driven_backtesting",
+      "paper_research"
+    ],
+    "installation_state": "not_installed_by_manifest"
+  },
+  "providers": {
+    "crypto": {
+      "connectors": ["Binance", "Hyperliquid", "Deribit", "Bybit", "Coinbase"],
+      "markets": ["spot", "perpetuals", "futures", "options_where_supported"],
+      "data": ["trades", "quotes", "order_book_where_supported", "instrument_metadata"],
+      "quality_rule": "Keep venue-level books and CVD separate; declare missing history and venue-specific depth."
+    },
+    "gold": {
+      "comex_gc_mgc": {
+        "provider": "Databento",
+        "dataset": "GLBX.MDP3",
+        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "book_levels": {
+          "MBO": "L3_order_by_order",
+          "MBP-10": "L2_ten_levels"
+        },
+        "license": "paid_or_licensed",
+        "nautilus_adapter": true
+      },
+      "mcx_gold": {
+        "provider": "Official MCX feed or authorised distributor",
+        "schemas": ["provider_native_order_book", "provider_native_trades"],
+        "license": "exchange_or_vendor_entitlement",
+        "nautilus_adapter": "custom_required"
+      },
+      "xauusd_spot_cfd": {
+        "provider": "Broker_or_ECN",
+        "schemas": ["broker_quotes", "broker_trades", "broker_depth_if_exposed"],
+        "license": "broker_entitlement",
+        "nautilus_adapter": "venue_specific_or_custom",
+        "limitation": "No consolidated global OTC XAUUSD order book."
+      }
+    },
+    "fx": {
+      "cme_fx_futures": {
+        "provider": "Databento",
+        "dataset": "GLBX.MDP3",
+        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "nautilus_adapter": true,
+        "limitation": "CME currency futures are not spot FX."
+      },
+      "spot_fx": {
+        "provider": "Interactive Brokers or another licensed broker",
+        "schemas": ["broker_quotes", "broker_trades", "broker_depth_if_entitled"],
+        "nautilus_adapter": "broker_specific",
+        "limitation": "Broker-specific liquidity; no consolidated global FX book."
+      }
+    },
+    "equities": {
+      "us_equities": {
+        "provider": "Databento venue_specific_dataset or Interactive Brokers",
+        "schemas": ["dataset_supported_trades", "dataset_supported_quotes", "MBO_where_available"],
+        "nautilus_adapter": "Databento_or_broker",
+        "limitation": "Check each dataset. EQUS.MINI is aggregated top-of-book and is not MBO."
+      },
+      "nse_equities": {
+        "provider": "NSE licensed feed or authorised vendor",
+        "schemas": ["L1", "L2", "L3", "tick_by_tick_where_licensed"],
+        "nautilus_adapter": "custom_required"
+      }
+    },
+    "options": {
+      "cme_options_on_futures": {
+        "provider": "Databento",
+        "dataset": "GLBX.MDP3",
+        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "nautilus_adapter": true
+      },
+      "us_equity_options": {
+        "provider": "Licensed OPRA vendor such as Databento",
+        "schemas": ["trades", "quotes", "NBBO"],
+        "nautilus_adapter": "provider_specific",
+        "limitation": "OPRA trades/quotes do not mean order-by-order MBO."
+      },
+      "crypto_options": {
+        "provider": "Deribit",
+        "schemas": ["option_instruments", "trades", "quotes", "order_book_where_supported"],
+        "nautilus_adapter": true,
+        "limitation": "Options flow requires individual trade events; chain/OI snapshots alone are not flow."
+      },
+      "nse_fno": {
+        "provider": "NSE licensed F&O feed or authorised vendor",
+        "schemas": ["contract_trades", "quotes", "depth_where_licensed"],
+        "nautilus_adapter": "custom_required"
+      }
+    },
+    "mcx_other_commodities": {
+      "provider": "MCX licensed feed or authorised distributor",
+      "schemas": ["order_book_where_entitled", "trades"],
+      "nautilus_adapter": "custom_required"
+    }
+  },
+  "analytics": {
+    "footprint": "requires price-level executed trades, tick size and trustworthy aggressor-side labels",
+    "cvd_delta": "exchange-reported aggressor side preferred; quote-inferred side must remain labelled estimated",
+    "dom_heatmap": "requires an initial book snapshot and continuous, sequence-valid depth deltas",
+    "l3_queue": "requires order IDs and order-level events; cannot be reconstructed from L2",
+    "absorption_iceberg": "probabilistic features only; public L2 cannot prove hidden order identity or intent",
+    "options_flow": "individual option trades with instrument, timestamp, price, size and aggressor semantics",
+    "gex": "derived analytics; dealer positioning/sign assumptions must be explicit and must not be presented as observed trades"
+  },
+  "security": {
+    "commit_credentials": false,
+    "commit_private_keys": false,
+    "default_execution_enabled": false,
+    "chatgpt_feed_mode": "read_only_published_reports"
+  }
+}
