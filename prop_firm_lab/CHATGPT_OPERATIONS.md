@@ -42,3 +42,12 @@ Stop rather than guess when:
 ## Safety and scope
 
 This platform is research-only. Do not connect live broker trading, place orders, store broker passwords/API keys in the repository, or imply a simulated account has equivalent live-market fills. Keep real account data, trade logs and reports in a private repository or private storage. Use GitHub Actions secrets for any future vendor credentials and never print secrets into logs.
+
+
+## Massive data access
+
+- The repository configures the hosted Massive MCP endpoint for compatible VS Code / GitHub Copilot clients. Complete OAuth in the client; no credential is committed.
+- ChatGPT's Massive app must be connected separately from the ChatGPT app directory. The GitHub integration does not install a connector into this conversation.
+- Historical candle ingestion uses the official Massive Python SDK pinned at `massive==2.9.1`.
+- Before fetching or storing real market data, confirm repository visibility is private, add `MASSIVE_API_KEY` as a GitHub Actions secret, verify symbol/asset-class entitlements, and respect Massive's data-use terms.
+- The new downloader outputs UTC aggregate bars plus a SHA-256 manifest. Aggregate bars are not tick/quote/order-book data and must not be described as such.
