@@ -13,20 +13,41 @@
       "event_driven_backtesting",
       "paper_research"
     ],
-    "installation_state": "not_installed_by_manifest"
+    "installation_state": "pinned_in_requirements_marketdata",
+    "installation_method": "tools/install_market_data.ps1"
   },
   "providers": {
     "crypto": {
-      "connectors": ["Binance", "Hyperliquid", "Deribit", "Bybit", "Coinbase"],
-      "markets": ["spot", "perpetuals", "futures", "options_where_supported"],
-      "data": ["trades", "quotes", "order_book_where_supported", "instrument_metadata"],
+      "connectors": [
+        "Binance",
+        "Hyperliquid",
+        "Deribit",
+        "Bybit",
+        "Coinbase"
+      ],
+      "markets": [
+        "spot",
+        "perpetuals",
+        "futures",
+        "options_where_supported"
+      ],
+      "data": [
+        "trades",
+        "quotes",
+        "order_book_where_supported",
+        "instrument_metadata"
+      ],
       "quality_rule": "Keep venue-level books and CVD separate; declare missing history and venue-specific depth."
     },
     "gold": {
       "comex_gc_mgc": {
         "provider": "Databento",
         "dataset": "GLBX.MDP3",
-        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "schemas": [
+          "MBO",
+          "MBP-10",
+          "TRADES"
+        ],
         "book_levels": {
           "MBO": "L3_order_by_order",
           "MBP-10": "L2_ten_levels"
@@ -36,13 +57,20 @@
       },
       "mcx_gold": {
         "provider": "Official MCX feed or authorised distributor",
-        "schemas": ["provider_native_order_book", "provider_native_trades"],
+        "schemas": [
+          "provider_native_order_book",
+          "provider_native_trades"
+        ],
         "license": "exchange_or_vendor_entitlement",
         "nautilus_adapter": "custom_required"
       },
       "xauusd_spot_cfd": {
         "provider": "Broker_or_ECN",
-        "schemas": ["broker_quotes", "broker_trades", "broker_depth_if_exposed"],
+        "schemas": [
+          "broker_quotes",
+          "broker_trades",
+          "broker_depth_if_exposed"
+        ],
         "license": "broker_entitlement",
         "nautilus_adapter": "venue_specific_or_custom",
         "limitation": "No consolidated global OTC XAUUSD order book."
@@ -52,13 +80,21 @@
       "cme_fx_futures": {
         "provider": "Databento",
         "dataset": "GLBX.MDP3",
-        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "schemas": [
+          "MBO",
+          "MBP-10",
+          "TRADES"
+        ],
         "nautilus_adapter": true,
         "limitation": "CME currency futures are not spot FX."
       },
       "spot_fx": {
         "provider": "Interactive Brokers or another licensed broker",
-        "schemas": ["broker_quotes", "broker_trades", "broker_depth_if_entitled"],
+        "schemas": [
+          "broker_quotes",
+          "broker_trades",
+          "broker_depth_if_entitled"
+        ],
         "nautilus_adapter": "broker_specific",
         "limitation": "Broker-specific liquidity; no consolidated global FX book."
       }
@@ -66,13 +102,22 @@
     "equities": {
       "us_equities": {
         "provider": "Databento venue_specific_dataset or Interactive Brokers",
-        "schemas": ["dataset_supported_trades", "dataset_supported_quotes", "MBO_where_available"],
+        "schemas": [
+          "dataset_supported_trades",
+          "dataset_supported_quotes",
+          "MBO_where_available"
+        ],
         "nautilus_adapter": "Databento_or_broker",
         "limitation": "Check each dataset. EQUS.MINI is aggregated top-of-book and is not MBO."
       },
       "nse_equities": {
         "provider": "NSE licensed feed or authorised vendor",
-        "schemas": ["L1", "L2", "L3", "tick_by_tick_where_licensed"],
+        "schemas": [
+          "L1",
+          "L2",
+          "L3",
+          "tick_by_tick_where_licensed"
+        ],
         "nautilus_adapter": "custom_required"
       }
     },
@@ -80,30 +125,50 @@
       "cme_options_on_futures": {
         "provider": "Databento",
         "dataset": "GLBX.MDP3",
-        "schemas": ["MBO", "MBP-10", "TRADES"],
+        "schemas": [
+          "MBO",
+          "MBP-10",
+          "TRADES"
+        ],
         "nautilus_adapter": true
       },
       "us_equity_options": {
         "provider": "Licensed OPRA vendor such as Databento",
-        "schemas": ["trades", "quotes", "NBBO"],
+        "schemas": [
+          "trades",
+          "quotes",
+          "NBBO"
+        ],
         "nautilus_adapter": "provider_specific",
         "limitation": "OPRA trades/quotes do not mean order-by-order MBO."
       },
       "crypto_options": {
         "provider": "Deribit",
-        "schemas": ["option_instruments", "trades", "quotes", "order_book_where_supported"],
+        "schemas": [
+          "option_instruments",
+          "trades",
+          "quotes",
+          "order_book_where_supported"
+        ],
         "nautilus_adapter": true,
         "limitation": "Options flow requires individual trade events; chain/OI snapshots alone are not flow."
       },
       "nse_fno": {
         "provider": "NSE licensed F&O feed or authorised vendor",
-        "schemas": ["contract_trades", "quotes", "depth_where_licensed"],
+        "schemas": [
+          "contract_trades",
+          "quotes",
+          "depth_where_licensed"
+        ],
         "nautilus_adapter": "custom_required"
       }
     },
     "mcx_other_commodities": {
       "provider": "MCX licensed feed or authorised distributor",
-      "schemas": ["order_book_where_entitled", "trades"],
+      "schemas": [
+        "order_book_where_entitled",
+        "trades"
+      ],
       "nautilus_adapter": "custom_required"
     }
   },
@@ -121,5 +186,16 @@
     "commit_private_keys": false,
     "default_execution_enabled": false,
     "chatgpt_feed_mode": "read_only_published_reports"
+  },
+  "client_packages": {
+    "nautilus_trader": {
+      "version": "1.231.0",
+      "role": "stable_1_x_multi_asset_engine_and_native_databento_adapter"
+    },
+    "databento": {
+      "version": "0.90.0",
+      "role": "standalone_historical_download_metadata_and_cost_estimation_utilities",
+      "required_for_nautilus_native_databento_adapter": false
+    }
   }
 }
