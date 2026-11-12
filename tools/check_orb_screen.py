@@ -70,6 +70,7 @@ def main() -> int:
 
     portfolio = vbt.Portfolio.from_signals(
         pd.Series(close, index=index),
+        price=pd.Series(open_, index=index),
         entries=entries,
         exits=exits,
         short_entries=short_entries,
