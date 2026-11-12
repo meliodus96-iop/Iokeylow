@@ -192,5 +192,33 @@
       "use": "multi-exchange crypto L2/trades/funding/OI/candles/orderflow API",
       "limitation": "fast-moving v0.0.6; default research config disables collectors; no Dukascopy Gold/Forex connector found; do not vendor before license clarification"
     }
+  },
+  "strategy_research": {
+    "fast_screening": {
+      "name": "VectorBT community edition",
+      "repository": "https://github.com/polakowo/vectorbt",
+      "package_version": "1.2.1",
+      "cost": "free_for_individual_research",
+      "license": "Apache-2.0 with Commons Clause (fair-code; restrictions on selling products/services primarily consisting of this software)",
+      "role": "vectorized multi-variant signal and portfolio screening",
+      "runner": "tools/run_orb_screen.py",
+      "initial_example": "controlled_240_variant_ORB_grid",
+      "limitation": "development screening only; final stop/fill validation remains with NautilusTrader and instrument-specific execution checks"
+    },
+    "bounded_refinement": {
+      "name": "Optuna",
+      "repository": "https://github.com/optuna/optuna",
+      "package_version": "5.0.0",
+      "license": "MIT",
+      "cost": "free_open_source",
+      "role": "optional constrained second-stage parameter search after coarse grid screening",
+      "guardrail": "train-only search; log every trial; never select parameters using the untouched holdout"
+    },
+    "final_event_validation": {
+      "name": "NautilusTrader",
+      "package_version": "1.231.0",
+      "role": "event-driven historical replay and execution-aware final validation after shortlisting",
+      "guardrail": "use correct instrument metadata, bid/ask or trade data, costs, and realistic fill assumptions"
+    }
   }
 }
