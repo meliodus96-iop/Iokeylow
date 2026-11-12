@@ -53,9 +53,6 @@ jobs:
       - name: Compile Python tools
         run: python -m compileall -q tools
 
-      - name: Verify ORB screen CLI imports
-        run: python tools/run_orb_screen.py --help
-
   install-runtime-windows:
     runs-on: windows-latest
     timeout-minutes: 25
@@ -101,5 +98,8 @@ jobs:
       - name: Check dependency consistency
         run: python -m pip check
 
-      - name: Verify NautilusTrader, CCXT, Parquet and WebSocket imports
+      - name: Verify NautilusTrader, CCXT, VectorBT and Optuna
         run: python tools/check_marketdata_install.py
+
+      - name: Verify ORB screen CLI imports
+        run: python tools/run_orb_screen.py --help
