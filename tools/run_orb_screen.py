@@ -321,9 +321,7 @@ def create_signals_for_batch(
                 continue
 
             risk_pct = risk / entry_price
-            if not math.isfinite(risk_pct) or risk_pct <= 0 or risk_pct >= 0.25:
-                # A 25%+ opening-range stop is not a useful short-horizon ORB
-                # execution assumption; record it as invalid, not a trade.
+            if not math.isfinite(risk_pct) or risk_pct <= 0:
                 continue
 
             if side > 0:
