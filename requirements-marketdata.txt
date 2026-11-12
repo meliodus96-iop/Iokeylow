@@ -1,7 +1,12 @@
-# Free market-data research environment (Python 3.12 recommended).
-# No paid data-vendor SDK or exchange API key is required by these fetchers.
+# Free-first market-data and strategy-research environment (Python 3.12 recommended).
+# No paid data-vendor SDK or exchange API key is required by the configured fetchers.
 nautilus_trader==1.231.0
 ccxt==4.5.92
 pandas>=2.2,<4
 pyarrow>=17,<30
 websockets==15.0.1
+
+# Fast multi-variant screening + bounded hyperparameter search.
+# VectorBT community edition is free to use but carries Apache-2.0 + Commons Clause.
+vectorbt==1.2.1
+optuna==5.0.0
