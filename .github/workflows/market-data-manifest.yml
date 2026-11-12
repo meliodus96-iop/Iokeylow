@@ -11,6 +11,7 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/check_orb_screen.py"
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
@@ -23,6 +24,7 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/check_orb_screen.py"
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
@@ -103,3 +105,6 @@ jobs:
 
       - name: Verify ORB screen CLI imports
         run: python tools/run_orb_screen.py --help
+
+      - name: Run synthetic ORB/vectorbt integration smoke test
+        run: python tools/check_orb_screen.py
