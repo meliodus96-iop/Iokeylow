@@ -47,7 +47,7 @@ The 5 × 3 × 2 × 4 × 2 combination is exactly 240. It is not a licence to add
 - No missing intervals are synthetically filled. An opening range is skipped if any of its one-minute bars is missing.
 - Choose the local market session timezone and its start/end times explicitly. For UTC-origin data, the script converts timestamps to the requested IANA timezone.
 - ATR(14) is shifted one bar so the breakout threshold uses only prior completed information.
-- Breakout is confirmed at the candle close; entry is on the close of the next available one-minute bar. This is deliberately delayed rather than assuming a fill at the breakout close.
+- Breakout is confirmed at the candle close; entry is at the open of the next available one-minute bar. This is deliberately delayed rather than assuming a fill at the breakout close.
 - Stop/target simulation uses one-minute OHLC. A candle that touches both levels is path-ambiguous; use tick data and NautilusTrader before promoting a candidate.
 - Fees and slippage are charged per side. The R statistics are normalized by initial stop distance. The runner does not model a broker's contract multiplier, lot size, margin, queue position, partial fills or exchange rejection.
 - `--dev-end` is an exclusive UTC cutoff. Rows at/after the cutoff are excluded before indicators and signals are calculated; no holdout results are computed in this screen.
