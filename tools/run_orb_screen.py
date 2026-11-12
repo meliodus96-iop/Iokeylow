@@ -286,6 +286,9 @@ def create_signals_for_batch(
                 next_time = pd.Timestamp(timestamp_values[entry_local_idx])
                 if next_time - signal_time != pd.Timedelta(minutes=1):
                     continue
+                # Enter at the next bar's open. The signal was only known
+                # after the previous bar closed, so this is the first causal
+                # fill price available in this one-minute OHLC model.
                 entry_price = float(open_values[entry_local_idx])
 
                 if long_break:
@@ -508,6 +511,7 @@ def main() -> int:
             exits=exits,
             short_entries=short_entries,
             short_exits=short_exits,
+            price=open_,
             open=open_,
             high=high,
             low=low,
@@ -585,8 +589,8 @@ def main() -> int:
         },
         "execution_assumptions": {
             "signal": "breakout confirmed at candle close",
-            "entry": "next available one-minute candle close (causal, delayed-entry approximation)",
-            "stop_and_target": "VectorBT OHLC stop simulation using one-minute high/low",
+            "entry": "next available one-minute candle open after breakout confirmation at prior close",
+            "stop_and_target": "VectorBT OHLC stop simulation using one-minute high/low; order price is next bar open",
             "target_collision": "same-bar stop/target ordering follows VectorBT's OHLC stop engine; inspect ambiguous bars before promotion",
             "fees_bps_per_side": args.fees_bps,
             "slippage_bps_per_side": args.slippage_bps,
