@@ -58,7 +58,7 @@ The 5 × 3 × 2 × 4 × 2 combination is exactly 240. It is not a licence to add
 .\.venv-marketdata\Scripts\python.exe tools\run_orb_screen.py `
   --input data\raw\crypto\binanceusdm\BTC_USDT_USDT\1m_20240101_20250101.parquet `
   --timestamp-col ts_event `
-  --timezone America\New_York `
+  --timezone America/New_York `
   --session-start 09:30 --session-end 16:00 `
   --dev-end 2025-01-01 `
   --fees-bps 5 --slippage-bps 3
