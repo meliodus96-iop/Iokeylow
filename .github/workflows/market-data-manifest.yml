@@ -14,6 +14,7 @@ on:
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
+      - "tools/run_orb_screen.py"
       - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   pull_request:
@@ -25,6 +26,7 @@ on:
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
+      - "tools/run_orb_screen.py"
       - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   workflow_dispatch:
@@ -48,8 +50,11 @@ jobs:
       - name: Validate provider registry and safety defaults
         run: python tools/validate_market_data_manifest.py
 
-      - name: Compile Python fetchers
+      - name: Compile Python tools
         run: python -m compileall -q tools
+
+      - name: Verify ORB screen CLI imports
+        run: python tools/run_orb_screen.py --help
 
   install-runtime-windows:
     runs-on: windows-latest
