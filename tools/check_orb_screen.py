@@ -34,7 +34,7 @@ def main() -> int:
     open_[35], high[35], low[35], close[35] = 100.45, 100.65, 100.40, 100.60
     open_[36], high[36], low[36], close[36] = 100.60, 100.75, 100.55, 100.70
     # A later bar reaches the target; the remaining bars stay away from the stop.
-    open_[37], high[37], low[37], close[37] = 100.70, 101.30, 100.65, 101.20
+    open_[37], high[37], low[37], close[37] = 100.70, 102.00, 100.65, 101.90
 
     raw = pd.DataFrame({
         "timestamp_utc": index,
