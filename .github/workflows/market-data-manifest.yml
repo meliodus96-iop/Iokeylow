@@ -11,9 +11,11 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/check_orb_screen.py"
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
+      - "tools/run_orb_screen.py"
       - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   pull_request:
@@ -22,9 +24,11 @@ on:
       - "requirements-marketdata.txt"
       - "tools/validate_market_data_manifest.py"
       - "tools/check_marketdata_install.py"
+      - "tools/check_orb_screen.py"
       - "tools/install_market_data.ps1"
       - "tools/fetch_*.py"
       - "tools/collect_*.py"
+      - "tools/run_orb_screen.py"
       - "tools/fetch_*.ps1"
       - ".github/workflows/market-data-manifest.yml"
   workflow_dispatch:
@@ -48,7 +52,7 @@ jobs:
       - name: Validate provider registry and safety defaults
         run: python tools/validate_market_data_manifest.py
 
-      - name: Compile Python fetchers
+      - name: Compile Python tools
         run: python -m compileall -q tools
 
   install-runtime-windows:
@@ -96,5 +100,11 @@ jobs:
       - name: Check dependency consistency
         run: python -m pip check
 
-      - name: Verify NautilusTrader, CCXT, Parquet and WebSocket imports
+      - name: Verify NautilusTrader, CCXT, VectorBT and Optuna
         run: python tools/check_marketdata_install.py
+
+      - name: Verify ORB screen CLI imports
+        run: python tools/run_orb_screen.py --help
+
+      - name: Run synthetic ORB/vectorbt integration smoke test
+        run: python tools/check_orb_screen.py

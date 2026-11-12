@@ -56,3 +56,8 @@ The additive multi-asset market-data layer is documented in [market_data/README.
 - [Provider registry](market_data/providers.json)
 - [Canonical event and data-quality contract](market_data/DATA_CONTRACT.md)
 - [Manifest validator](tools/validate_market_data_manifest.py)
+
+
+## Strategy variation and validation
+
+- [Strategy variation lab](market_data/STRATEGY_VARIATION_LAB.md) — VectorBT 240-variant ORB screen, Optuna refinement guardrails and NautilusTrader promotion process.

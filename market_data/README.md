@@ -59,3 +59,7 @@ Binance Vision's current archive terms limit use to personal non-commercial non-
 Databento is excluded. Historical data is usage-priced; its live Standard plan is a paid monthly subscription. New-account credits are temporary, not a permanent free tier.
 
 See FREE_SOURCE_SELECTION.md for the full project-by-project comparison and user setup flow; providers.json for the source registry; DATA_CONTRACT.md for event and data-quality semantics.
+
+## Strategy variation lab
+
+The strategy research environment now includes VectorBT community edition (`vectorbt==1.2.1`) for broad parameter-grid screening and Optuna (`optuna==5.0.0`) for optional bounded second-stage search. The first example screens a predeclared 240-variant ORB grid. Read [STRATEGY_VARIATION_LAB.md](STRATEGY_VARIATION_LAB.md) for the exact design, command, data contract and anti-overfitting promotion rules. Use VectorBT to shortlist, then NautilusTrader for event-driven validation with instrument-specific execution assumptions. This is not an automated strategy generator and does not select a live strategy for deployment.
